@@ -1,0 +1,140 @@
+<!-- public_view.html - 公開展示頁面內容片段 -->
+<!-- 此檔案將被載入到 index.html (在 Apps Script 環境中由 script.js 載入) -->
+
+<style>
+  /* 僅限此頁面的樣式，以避免全域衝突 */
+  /* header 和 product card 的基本樣式已在 style.css 中，此處為特有或覆蓋 */
+  .product-image-wrapper { /* 覆寫/確保 */ height: 150px; } 
+  .product-card:hover { /* 覆寫/確保 */ transform: translateY(-3px); }
+</style>
+
+<header class="public-header d-flex justify-content-between align-items-center">
+  <h1 class="h4 mb-0 text-dark">崇元福利社 - 商品精選</h1>
+  <div class="d-flex align-items-center">
+    <input id="publicSearchInput" type="search" placeholder="搜尋商品…" class="form-control form-control-sm mr-2" style="width: 150px;"/>
+    <button class="btn btn-outline-secondary btn-sm" onclick="window.switchToLoginView()"><i class="fas fa-user-lock mr-1"></i> 管理員登入</button>
+  </div>
+</header>
+
+<main class="container-fluid py-4">
+  <!-- 全局錯誤顯示區 (由父框架或特定腳本控制，在此頁面提供元素) -->
+  <div class="page-specific-error-banner alert" style="display: none;" role="alert"></div>
+
+  <!-- 商品展示區塊 -->
+  <div id="publicLoading" class="text-center text-muted py-5" style="display: none;">
+    <div class="spinner-border text-primary" role="status"><span class="sr-only">載入中...</span></div>
+    <p class="mt-2">商品載入中...</p>
+  </div>
+  <div id="publicProductGrid" class="row"></div>
+  <div id="publicNoResults" class="text-center text-muted py-5" style="display: none;">
+    <p><i class="fas fa-box-open mr-2"></i>找不到符合條件的商品。</p>
+  </div>
+
+  <hr class="my-5">
+
+  <!-- 用戶提問表單區塊 -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-body">
+      <h5 class="card-title text-primary"><i class="fas fa-comments mr-2"></i>聯絡我們 / 問問題</h5>
+      <p class="card-text text-muted">有任何問題或建議嗎？請留下您的寶貴訊息，我們會盡快處理！</p>
+      
+      <div class="form-group">
+        <label for="public_name"><i class="fas fa-user-tag mr-1"></i>您的名字：</label>
+        <input type="text" id="public_name" class="form-control" placeholder="請輸入您的名字" required>
+      </div>
+      
+      <div class="form-group mt-3">
+        <label for="public_question"><i class="fas fa-question-circle mr-1"></i>您的問題：</label>
+        <textarea id="public_question" class="form-control" rows="4" placeholder="請輸入您的問題或建議" required></textarea>
+      </div>
+      
+      <button id="public_submit_btn" class="btn btn-info mt-3"><i class="fas fa-paper-plane mr-1"></i>送出問題</button>
+
+      <div id="public_result" class="alert mt-3" style="display:none;" role="alert"></div>
+    </div>
+  </div>
+</main>
+
+<script class="page-script">
+(function(callApi) { // `callApi` 函式從父框架傳遞進來
+  'use strict';
+
+  // --- 商品列表顯示與搜尋邏輯 ---
+  let allProducts = []; 
+  const productGrid = document.getElementById('publicProductGrid');
+  const noResultsDiv = document.getElementById('publicNoResults');
+  const productLoadingDiv = document.getElementById('publicLoading'); // 這裡仍然需要引用此載入元素
+  const searchInput = document.getElementById('publicSearchInput');
+
+  function createProductCard(product) { 
+    const col = document.createElement('div');
+    col.className = 'col-6 col-sm-4 col-md-3 col-lg-2'; 
+    col.innerHTML = `
+      <div class="card h-100 product-card">
+        <div class="product-image-wrapper">
+          <img src="${product.imageUrl || 'https://via.placeholder.com/150?text=NoImage'}" class="img-fluid" alt="${product.name}">
+        </div>
+        <div class="card-body text-center p-2">
+          <h6 class="card-title mb-1">${product.name}</h6>
+          <p class="card-text text-primary font-weight-bold">NT$ ${product.price}</p>
+        </div>
+      </div>
+    `;
+    return col;
+  }
+
+  function renderProductGrid(list) { 
+    productGrid.innerHTML = ''; noResultsDiv.style.display = 'none';
+    if (list && list.length > 0) { list.forEach(product => productGrid.appendChild(createProductCard(product))); } else { noResultsDiv.style.display = 'block'; }
+  }
+
+  function handleSearch() { 
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    if (!searchTerm) { renderProductGrid(allProducts); return; }
+    const filteredList = allProducts.filter(item => item.name.toLowerCase().includes(searchTerm));
+    renderProductGrid(filteredList);
+  }
+
+  searchInput.addEventListener('input', handleSearch);
+
+  // 頁面載入時，呼叫 API 獲取公開商品列表
+  productLoadingDiv.style.display = 'block'; // 手動顯示載入器 (父層 setLoading 不負責頁面內特定內容)
+  callApi('getPublicProducts')
+    .then(data => {
+      productLoadingDiv.style.display = 'none';
+      allProducts = data;
+      renderProductGrid(allProducts);
+    })
+    .catch(error => {
+      console.error("載入公開商品失敗:", error);
+      productLoadingDiv.innerHTML = `<p class="text-danger">載入商品失敗：${error.message} <i class="fas fa-exclamation-triangle"></i></p>`;
+    });
+
+  // --- 用戶提問表單邏輯 ---
+  const nameInput = document.getElementById('public_name');
+  const questionInput = document.getElementById('public_question');
+  const submitBtn = document.getElementById('public_submit_btn');
+  const resultDiv = document.getElementById('public_result');
+
+  function showFormResult(type, message) { 
+      resultDiv.className = `alert alert-${type}`; resultDiv.textContent = message; resultDiv.style.display = 'block';
+  }
+  
+  async function submitQuestionForm() { 
+      const name = nameInput.value.trim(); const question = questionInput.value.trim();
+      if (!name || !question) { showFormResult('warning', '<i class="fas fa-exclamation-circle mr-1"></i>請輸入您的名字和問題！'); return; }
+      
+      submitBtn.disabled = true; submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 送出中...';
+      showFormResult('info', '正在送出您的問題...');
+      try {
+          const response = await callApi('submitQuestion', { name, question });
+          showFormResult('success', `<i class="fas fa-check-circle mr-1"></i>${response.reply}`);
+          nameInput.value = ''; questionInput.value = '';
+      } catch (error) { console.error("提交問題失敗:", error); showFormResult('danger', \`<i class="fas fa-times-circle mr-1"></i>問題提交失敗：\${error.message}\`); } 
+      finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane mr-1"></i>送出問題'; }
+  }
+
+  submitBtn.addEventListener('click', submitQuestionForm);
+
+})(callApi);
+</script>
