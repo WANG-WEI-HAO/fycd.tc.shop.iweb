@@ -1,1 +1,36 @@
-<iframe src="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec" width="100%" height="600px"></iframe>
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>控制面板</title>
+    <!-- 定義一些 CSS 樣式，讓 iframe 佔滿整個頁面 -->
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden; /* 隱藏外層頁面的滾動條 */
+        }
+        #app-frame {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none; /* 移除 iframe 的邊框 */
+        }
+    </style>
+</head>
+<body>
+
+    <!--
+      這個 iframe 會載入並顯示 Google Apps Script 的網頁應用程式。
+      所有的互動都會在這個 iframe 內部發生。
+    -->
+    <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec">
+        <p>您的瀏覽器不支援 iframe，請直接點擊 <a href="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec">此連結</a> 訪問。</p>
+    </iframe>
+
+</body>
+</html>
