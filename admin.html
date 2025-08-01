@@ -1,0 +1,232 @@
+<!-- admin.html - 後台管理頁面內容片段 -->
+
+<style>
+  /* 僅限此頁面的樣式，已在 style.css 中，此處可簡化或用於特有覆蓋 */
+  .table-responsive { /* ... */ max-height: 70vh; /* Adjust for responsiveness if needed */ } 
+</style>
+
+<div id="admin-view-container" class="container-fluid py-4">
+  
+  <div class="d-flex justify-content-between align-items-center mb-4 bg-white py-3 sticky-top">
+    <h2 class="h3 mb-0 text-dark"><i class="fas fa-cubes mr-2"></i>商品後台管理</h2>
+    <div class="d-flex">
+        <button class="btn btn-outline-info btn-sm mr-2" onclick="window.loadPage('Public')"><i class="fas fa-eye mr-1"></i> 前台預覽</button>
+        <button class="btn btn-danger btn-sm" onclick="window.handleLogout()"><i class="fas fa-sign-out-alt mr-1"></i> 登出</button>
+    </div>
+  </div>
+
+  <!-- 全局錯誤顯示區 (由父框架或特定腳本控制) -->
+  <div class="page-specific-error-banner alert alert-danger" style="display: none;" role="alert"></div>
+
+  <!-- 操作按鈕區 -->
+  <div class="mb-3 d-flex justify-content-start align-items-center flex-wrap">
+    <button id="adminBtnAdd" class="btn btn-primary mr-2 mb-2"><i class="fas fa-plus-circle mr-1"></i> 新增商品</button>
+    <button id="adminBtnSaveOrder" class="btn btn-success mr-2 mb-2"><i class="fas fa-save mr-1"></i> 儲存排序</button>
+    <button id="adminBtnRefresh" class="btn btn-secondary mb-2"><i class="fas fa-sync-alt mr-1"></i> 重新整理</button>
+  </div>
+
+  <!-- 商品列表表格 -->
+  <div class="table-responsive bg-white rounded shadow-sm">
+    <table id="adminTblProducts" class="table table-hover table-sm mb-0">
+      <thead>
+        <tr>
+          <th style="width: 40px;"></th> <!-- 拖曳把手 -->
+          <th style="width: 100px;">圖片</th>
+          <th>名稱</th>
+          <th style="width: 120px;">價格</th>
+          <th style="width: 80px;">上架</th>
+          <th style="width: 150px;">操作</th>
+        </tr>
+      </thead>
+      <tbody id="adminTbodyProducts">
+        <!-- 商品數據將由 JavaScript 載入和渲染 -->
+        <tr><td colspan="6" class="text-center p-4">載入中...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- 商品新增/編輯對話框 (模態視窗樣式) -->
+  <div id="adminDialog" style="display:none;">
+    <div class="modal-content">
+      <form id="adminFrmProduct" autocomplete="off">
+        <h4 id="adminDlgTitle" class="mb-4 text-primary"><i class="fas fa-edit mr-2"></i></h4>
+        <input type="hidden" name="id" /><input type="hidden" name="originalImageUrl" />
+        
+        <div class="form-group"><label><i class="fas fa-tag mr-1"></i>商品名稱</label><input type="text" name="name" class="form-control" required /></div>
+        <div class="form-group mt-2"><label><i class="fas fa-dollar-sign mr-1"></i>價格 (NT$)</label><input type="number" name="price" min="0" class="form-control" required /></div>
+        <div class="form-group mt-2">
+            <label><i class="fas fa-image mr-1"></i>商品圖片</label>
+            <input type="file" id="adminInputImage" class="form-control-file" accept="image/*" />
+            <img id="adminPreviewImage" class="mt-2 img-thumbnail" style="max-height: 120px; display: none;" alt="圖片預覽" />
+            <small class="form-text text-muted mt-1">最大檔案大小為 1MB (兆位元組)。</small>
+        </div>
+        
+        <hr class="my-4" />
+        <div class="d-flex justify-content-end">
+            <button type="button" id="adminBtnDlgCancel" class="btn btn-light mr-2"><i class="fas fa-times-circle mr-1"></i> 取消</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> 儲存商品</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script class="page-script">
+(function(callApi) { 
+  'use strict';
+  // 在腳本開始執行時，檢查 Session Token，若無則自動登出
+  if (!localStorage.getItem('sessionToken')) { 
+    if (window.handleLogout) window.handleLogout(); 
+    return; 
+  }
+  
+  const MAX_IMAGE_SIZE_BYTES = 1 * 1024 * 1024; // 定義圖片上傳的最大尺寸 (1MB)
+  let products = []; 
+  let sortable = null; 
+
+  const el = (id) => document.getElementById(id);
+
+  const tbody = el('adminTbodyProducts');
+  const dialog = el('adminDialog');
+  const frm = el('adminFrmProduct');
+  const imgInput = el('adminInputImage');
+  const imgPreview = el('adminPreviewImage');
+  const errorBanner = document.querySelector('.page-specific-error-banner'); // 使用查詢，而不是 ID
+
+  function showError(msg) { 
+    errorBanner.textContent = `操作錯誤: ${msg}`; 
+    errorBanner.style.display = 'block'; 
+  }
+
+  function handleApiFailure(error) {
+    console.error("管理後台 API 錯誤:", error);
+    showError(error.message); 
+    if (error.message && (error.message.includes("權限不足") || error.message.includes("過期"))) { 
+      setTimeout(() => { if (window.handleLogout) window.handleLogout(); }, 2000); 
+    }
+  }
+
+  function renderTable(list) {
+    products = list;
+    tbody.innerHTML = ''; 
+    if (!products || products.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">目前沒有任何商品</td></tr>';
+      return;
+    }
+    products.forEach(product => {
+      const tableRow = document.createElement('tr');
+      tableRow.dataset.id = product.id; 
+      tableRow.className = 'align-middle'; 
+      tableRow.innerHTML = `
+        <td class="text-center" style="cursor:grab;"><i class="fas fa-grip-vertical"></i></td>
+        <td><img src="${product.imageUrl || 'https://via.placeholder.com/50?text=NoImage'}" class="product-image-thumbnail" alt="${product.name}"></td>
+        <td>${product.name}</td>
+        <td>NT$ ${product.price}</td>
+        <td class="text-center">
+          <div class="custom-control custom-switch">
+            <input type="checkbox" class="custom-control-input" id="shelfSwitch-${product.id}" ${product.onShelf ? 'checked' : ''} data-product-id="${product.id}">
+            <label class="custom-control-label" for="shelfSwitch-${product.id}"></label>
+          </div>
+        </td>
+        <td>
+            <button class="btn btn-sm btn-info" data-action="edit" data-id="${product.id}"><i class="fas fa-edit mr-1"></i>編輯</button>
+            <button class="btn btn-sm btn-danger ml-1" data-action="delete" data-id="${product.id}"><i class="fas fa-trash-alt mr-1"></i>刪除</button>
+        </td>
+      `;
+      tbody.appendChild(tableRow);
+    });
+
+    if (window.Sortable) {
+      if (sortable) sortable.destroy();
+      sortable = new window.Sortable(tbody, { 
+        animation: 150,
+        handle: '.fa-grip-vertical' 
+      });
+    }
+    
+    tbody.addEventListener('click', (e) => {
+        const targetButton = e.target.closest('button[data-action]');
+        if (targetButton) {
+            const id = targetButton.dataset.id;
+            const action = targetButton.dataset.action;
+            if (action === 'edit') adminOpenForm(id);
+            else if (action === 'delete') adminDeleteProduct(id);
+        }
+    }, {once:true}); 
+    
+    tbody.addEventListener('change', (e) => {
+        const checkbox = e.target.closest('input[type="checkbox"][data-product-id]');
+        if (checkbox) {
+            adminToggleShelf(checkbox, checkbox.dataset.productId);
+        }
+    }, {once:true});
+  }
+
+  async function loadProducts() {
+    tbody.innerHTML = '<tr><td colspan="6" class="text-center p-4">載入中...</td></tr>';
+    errorBanner.style.display = 'none'; 
+    try {
+      renderTable(await callApi('getAdminProducts'));
+    } catch(e) { handleApiFailure(e); }
+  }
+
+  function adminOpenForm(id = '') {
+    frm.reset(); imgInput.value = ''; imgPreview.style.display = 'none'; imgPreview.src = '';
+    if (id) { 
+      const productToEdit = products.find(product => product.id === id);
+      el('adminDlgTitle').innerHTML = '<i class="fas fa-edit mr-2"></i>編輯商品';
+      frm.id.value = productToEdit.id; frm.name.value = productToEdit.name; frm.price.value = productToEdit.price;
+      frm.originalImageUrl.value = productToEdit.imageUrl; 
+      if (productToEdit.imageUrl) { imgPreview.src = productToEdit.imageUrl; imgPreview.style.display = 'block'; }
+    } else { el('adminDlgTitle').innerHTML = '<i class="fas fa-plus-circle mr-2"></i>新增商品'; }
+    dialog.style.display = 'flex'; 
+  }
+
+  el('adminBtnDlgCancel').onclick = () => { dialog.style.display = 'none'; };
+
+  frm.onsubmit = async (event) => { 
+    event.preventDefault(); 
+    const submitButton = event.target.querySelector('button[type="submit"]');
+    const selectedFile = imgInput.files[0];
+
+    if (selectedFile && selectedFile.size > MAX_IMAGE_SIZE_BYTES) { return alert(`圖片檔案過大！請選擇小於 ${MAX_IMAGE_SIZE_BYTES / (1024 * 1024)} MB 的圖片。`); }
+    submitButton.disabled = true; submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 儲存中...';
+
+    try {
+      let productFormData = {
+          id: event.target.id.value || undefined, name: event.target.name.value.trim(), price: Number(event.target.price.value),
+          onShelf: products.find(p => p.id === event.target.id.value)?.onShelf ?? true 
+      };
+      if (selectedFile) {
+        const base64String = await new Promise((resolve) => { const reader = new FileReader(); reader.onload = (e) => resolve(e.target.result.split(',')[1]); reader.readAsDataURL(selectedFile); });
+        productFormData.imageUrl = await callApi('uploadImageFromBase64', { base64Data: base64String, fileName: selectedFile.name });
+      } else {
+          if (!productFormData.id) { alert('新增商品時，請務必上傳一張圖片！'); submitButton.disabled = false; submitButton.innerHTML = '<i class="fas fa-save mr-1"></i> 儲存商品'; return; }
+          productFormData.imageUrl = event.target.originalImageUrl.value; 
+      }
+      
+      await callApi('saveProduct', { productData: productFormData });
+      dialog.style.display = 'none'; loadProducts();
+    } catch(e) { handleApiFailure(e); } finally { submitButton.disabled = false; submitButton.innerHTML = '<i class="fas fa-save mr-1"></i> 儲存商品'; }
+  };
+
+  async function adminDeleteProduct(id) { 
+    if (!confirm('確定要永久刪除這項商品嗎？此操作無法恢復！')) return;
+    try { await callApi('deleteProduct', { productId: id }); loadProducts(); } catch(e) { handleApiFailure(e); }
+  }
+  window.adminDeleteProduct = adminDeleteProduct;
+
+  async function adminToggleShelf(checkboxElement, productId) { 
+    try { await callApi('toggleShelf', { productId: productId, isOnShelf: checkboxElement.checked }); } catch(e) { handleApiFailure(e); checkboxElement.checked = !checkboxElement.checked; }
+  }
+  window.adminToggleShelf = adminToggleShelf;
+
+  el('adminBtnSaveOrder').onclick = async () => { 
+    if(!sortable) return; const productIdsInOrder = sortable.toArray();
+    try { await callApi('reorderProducts', { productIds: productIdsInOrder }); alert('商品排序已成功儲存！'); } catch(e) { handleApiFailure(e); }
+  };
+
+  el('adminBtnAdd').onclick = () => adminOpenForm(); el('adminBtnRefresh').onclick = loadProducts;
+  loadProducts();
+})(callApi);
+</script>
