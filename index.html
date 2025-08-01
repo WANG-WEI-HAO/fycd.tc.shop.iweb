@@ -1,36 +1,52 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>控制面板</title>
-    <!-- 定義一些 CSS 樣式，讓 iframe 佔滿整個頁面 -->
+    <title>控制面板</title> <!-- 這裡的標題會顯示在瀏覽器分頁上 -->
     <style>
+        /* CSS Reset and Styling */
         body, html {
             margin: 0;
             padding: 0;
-            height: 100%;
-            overflow: hidden; /* 隱藏外層頁面的滾動條 */
-        }
-        #app-frame {
-            position: absolute;
-            top: 0;
-            left: 0;
             width: 100%;
             height: 100%;
-            border: none; /* 移除 iframe 的邊框 */
+            overflow: hidden; /* 隱藏滾動條，讓 iframe 佔滿全部空間 */
+            font-family: sans-serif;
+        }
+        #app-frame {
+            border: none;     /* 移除 iframe 邊框 */
+            width: 100%;      /* 寬度佔滿父容器 */
+            height: 100%;     /* 高度佔滿父容器 */
+            display: block;   /* 避免底部產生奇怪的空白 */
+        }
+        #loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2rem;
+            color: #888;
         }
     </style>
 </head>
 <body>
 
-    <!--
-      這個 iframe 會載入並顯示 Google Apps Script 的網頁應用程式。
-      所有的互動都會在這個 iframe 內部發生。
-    -->
-    <iframe id="app-frame" src="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec">
-        <p>您的瀏覽器不支援 iframe，請直接點擊 <a href="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec">此連結</a> 訪問。</p>
+    <!-- 顯示一個簡單的載入提示，提升使用者體驗 -->
+    <div id="loader">正在載入應用程式...</div>
+
+    <!-- 嵌入 Google Apps Script 應用程式的 iframe -->
+    <iframe id="app-frame" 
+            src="https://script.google.com/macros/s/AKfycbz66pz4Ny7_24Vy7Hs-joJ4qI171cG35WDAjxkMBvM9eqjzmxWtz3kVx6mfg5B6hIgh/exec"
+            sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation">
     </iframe>
+
+    <script>
+        // 當 iframe 載入完成後，隱藏載入提示
+        document.getElementById('app-frame').onload = function() {
+            document.getElementById('loader').style.display = 'none';
+        };
+    </script>
 
 </body>
 </html>
