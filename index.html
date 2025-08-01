@@ -1,52 +1,26 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>控制面板</title> <!-- 這裡的標題會顯示在瀏覽器分頁上 -->
-    <style>
-        /* CSS Reset and Styling */
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden; /* 隱藏滾動條，讓 iframe 佔滿全部空間 */
-            font-family: sans-serif;
-        }
-        #app-frame {
-            border: none;     /* 移除 iframe 邊框 */
-            width: 100%;      /* 寬度佔滿父容器 */
-            height: 100%;     /* 高度佔滿父容器 */
-            display: block;   /* 避免底部產生奇怪的空白 */
-        }
-        #loader {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 1.2rem;
-            color: #888;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>崇元福利社</title>
+  <!-- 引入 Bootstrap 4 CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- 引入 Font Awesome (用於圖標) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <!-- 引入主樣式文件 -->
+  <link rel="stylesheet" href="style.css"> 
+  <!-- 引入主要的JavaScript邏輯 -->
+  <script defer src="script.js"></script> 
 </head>
 <body>
-
-    <!-- 顯示一個簡單的載入提示，提升使用者體驗 -->
-    <div id="loader">正在載入應用程式...</div>
-
-    <!-- 嵌入 Google Apps Script 應用程式的 iframe -->
-    <iframe id="app-frame" 
-            src="https://script.google.com/macros/s/AKfycbzp-k5a6gBwa6n4Bq8-CSITfTs9vrTJ15i4fA-_t8XOoUwmNB5R-aEwDcfzqwnf-KEy/exec"
-            sandbox="allow-forms allow-scripts allow-same-origin allow-popups allow-top-navigation">
-    </iframe>
-
-    <script>
-        // 當 iframe 載入完成後，隱藏載入提示
-        document.getElementById('app-frame').onload = function() {
-            document.getElementById('loader').style.display = 'none';
-        };
-    </script>
-
+  <!-- 主要應用內容將在這裡動態加載 -->
+  <main id="app-content"></main> 
+  
+  <!-- 初始載入動畫疊層，防止白屏 -->
+  <div id="loader-overlay" class="loader-display">
+    <div class="spinner-border" role="status"></div>
+    <p class="mt-2" id="loader-message">正在啟動應用程式...</p>
+  </div>
 </body>
 </html>
