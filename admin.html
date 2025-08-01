@@ -1,9 +1,10 @@
-<!-- admin.html - 後台管理頁面內容片段 -->
+<!-- pages/admin.html - 後台管理頁面內容片段 -->
 
 <style>
   /* 僅限此頁面的樣式，已在 style.css 中，此處可簡化或用於特有覆蓋 */
   .table-responsive { /* ... */ max-height: 70vh; /* Adjust for responsiveness if needed */ } 
 </style>
+
 
 <div id="admin-view-container" class="container-fluid py-4">
   
@@ -72,9 +73,8 @@
 </div>
 
 <script class="page-script">
-(function(callApi) { 
+(function(callApi, Sortable) { 
   'use strict';
-  // 在腳本開始執行時，檢查 Session Token，若無則自動登出
   if (!localStorage.getItem('sessionToken')) { 
     if (window.handleLogout) window.handleLogout(); 
     return; 
@@ -91,7 +91,7 @@
   const frm = el('adminFrmProduct');
   const imgInput = el('adminInputImage');
   const imgPreview = el('adminPreviewImage');
-  const errorBanner = document.querySelector('.page-specific-error-banner'); // 使用查詢，而不是 ID
+  const errorBanner = document.querySelector('.page-specific-error-banner'); // 頁面特有錯誤顯示區
 
   function showError(msg) { 
     errorBanner.textContent = `操作錯誤: ${msg}`; 
@@ -136,12 +136,14 @@
       tbody.appendChild(tableRow);
     });
 
-    if (window.Sortable) {
+    if (typeof Sortable !== 'undefined') { // 確保 SortableJS 函式可用
       if (sortable) sortable.destroy();
-      sortable = new window.Sortable(tbody, { 
+      sortable = new Sortable(tbody, { // 直接使用傳入的 Sortable 參數
         animation: 150,
         handle: '.fa-grip-vertical' 
       });
+    } else {
+        console.warn("SortableJS 未載入或不可用。拖曳排序功能將失效。");
     }
     
     tbody.addEventListener('click', (e) => {
@@ -228,5 +230,5 @@
 
   el('adminBtnAdd').onclick = () => adminOpenForm(); el('adminBtnRefresh').onclick = loadProducts;
   loadProducts();
-})(callApi);
+})(callApi, Sortable); // 將 Sortable 也作為參數傳遞
 </script>
