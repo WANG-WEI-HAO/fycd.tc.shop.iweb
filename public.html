@@ -1,11 +1,9 @@
-<!-- public_view.html - 公開展示頁面內容片段 -->
-<!-- 此檔案將被載入到 index.html (在 Apps Script 環境中由 script.js 載入) -->
+<!-- pages/public.html - 公開展示頁面內容片段 -->
+<!-- 此檔案將由 script.js 載入 -->
 
 <style>
-  /* 僅限此頁面的樣式，以避免全域衝突 */
-  /* header 和 product card 的基本樣式已在 style.css 中，此處為特有或覆蓋 */
-  .product-image-wrapper { /* 覆寫/確保 */ height: 150px; } 
-  .product-card:hover { /* 覆寫/確保 */ transform: translateY(-3px); }
+  /* 僅限此頁面的樣式，許多已移到 style.css 中 */
+  .public-image-wrapper { /* ... */ height: 150px; } 
 </style>
 
 <header class="public-header d-flex justify-content-between align-items-center">
@@ -63,7 +61,7 @@
   let allProducts = []; 
   const productGrid = document.getElementById('publicProductGrid');
   const noResultsDiv = document.getElementById('publicNoResults');
-  const productLoadingDiv = document.getElementById('publicLoading'); // 這裡仍然需要引用此載入元素
+  const productLoadingDiv = document.getElementById('publicLoading'); 
   const searchInput = document.getElementById('publicSearchInput');
 
   function createProductCard(product) { 
@@ -98,7 +96,7 @@
   searchInput.addEventListener('input', handleSearch);
 
   // 頁面載入時，呼叫 API 獲取公開商品列表
-  productLoadingDiv.style.display = 'block'; // 手動顯示載入器 (父層 setLoading 不負責頁面內特定內容)
+  productLoadingDiv.style.display = 'block'; 
   callApi('getPublicProducts')
     .then(data => {
       productLoadingDiv.style.display = 'none';
