@@ -1,17 +1,7 @@
-<!-- login.html - 登入頁面內容片段 -->
+<!-- pages/login.html - 登入頁面內容片段 -->
 
 <style>
-  /* 僅限此頁面的樣式，避免全域衝突 */
-  .form-signin-container { display: flex; align-items: center; justify-content: center; min-height: 100%; background-color: #f4f6f9; }
-  .form-signin { width: 100%; max-width: 380px; padding: 2.5rem; margin: 2rem auto; text-align: center; background: #ffffff; border-radius: 0.75rem; box-shadow: 0 4px 15px rgba(0,0,0,0.1); animation: fadeIn 0.8s ease-out; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-  .form-signin h1 { font-size: 1.8rem; font-weight: 600; color: #343a40; margin-bottom: 1.5rem; }
-  .form-control { background-color: #ffffff; border: 1px solid #ced4da; color: #495057; transition: border-color 0.2s ease; }
-  .form-control:focus { border-color: #80bdff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25); }
-  .btn-primary { background-color: #007bff; border-color: #007bff; transition: background-color 0.2s ease, transform 0.2s ease; }
-  .btn-primary:hover { background-color: #0056b3; border-color: #004085; transform: translateY(-2px); }
-  .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
-  .alert { text-align: left; }
+  /* 僅限此頁面的樣式，已在 style.css 中 */
 </style>
 
 <div class="form-signin-container">
@@ -20,7 +10,7 @@
     <input type="text" id="username" class="form-control" placeholder="帳號" required autocomplete="username">
     <input type="password" id="password" class="form-control mt-3" placeholder="密碼" required autocomplete="current-password">
     <button class="btn btn-lg btn-primary btn-block mt-4" id="login-btn">登入系統</button>
-    <!-- 全局錯誤顯示區 (供父框架或特定腳本控制) -->
+    <!-- 全局錯誤顯示區 (由父框架或特定腳本控制) -->
     <div class="page-specific-error-banner alert mt-3" style="display: none;" role="alert"></div>
     <div id="message-area" class="alert mt-3" style="display:none;" role="alert"></div>
   </div>
