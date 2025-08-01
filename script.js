@@ -2,7 +2,7 @@
 
 // ★★★ ！！！重要：請務必將此 URL 替換為您的 Apps Script 後端部署的 /exec URL ！！！ ★★★
 // 格式通常為：https://script.google.com/macros/s/AKfycbz_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/exec
-const APPS_SCRIPT_API_EXEC_URL = 'https://script.google.com/macros/s/AKfycbxp2WXQWDTFDTMlm7OLYNb7-XNxlbJ_Dm890sYNHBDaxGgFEeS3_YqM74tX65Q1Y8O9/exec'; 
+const APPS_SCRIPT_API_EXEC_URL = 'https://script.google.com/macros/s/AKfycbw-bDbmgf1LxoNsOBCk18-2YAImb5IGv8WwdwfotG4QEZpSMvaS4ACMP0CrHGErboFf/exec'; 
 
 // DOM 元素引用
 const appContent = document.getElementById('app-content');
